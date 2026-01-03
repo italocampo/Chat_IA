@@ -1,17 +1,21 @@
-import { kv } from '@vercel/kv';
+import Redis from 'ioredis';
+
+// Conecta usando a variável REDIS_URL que você já tem na Vercel
+const redis = new Redis(process.env.REDIS_URL as string);
 
 /**
  * Armazena uma resposta do n8n no Redis
- * Expira automaticamente em 1 hora (3600 segundos)
  */
 export async function storeResponse(sessionId: string, messageId: string, response: string): Promise<void> {
   const key = `chat:${sessionId}:${messageId}`;
   
-  // Salva o valor e define tempo de vida (TTL) de 1 hora
-  await kv.set(key, {
+  const data = JSON.stringify({
     response,
     timestamp: new Date().toISOString(),
-  }, { ex: 3600 });
+  });
+
+  // 'EX', 3600 = Expira em 1 hora (3600 segundos)
+  await redis.set(key, data, 'EX', 3600);
 }
 
 /**
@@ -23,12 +27,15 @@ export async function getAndRemoveResponse(
 ): Promise<string | null> {
   const key = `chat:${sessionId}:${messageId}`;
   
-  // Tenta buscar o objeto
-  const stored = await kv.get<{ response: string }>(key);
+  // Busca o dado
+  const storedString = await redis.get(key);
   
-  if (stored) {
-    // Se achou, deleta do banco para não ler duas vezes
-    await kv.del(key);
+  if (storedString) {
+    // Se achou, deleta para não ler repetido
+    await redis.del(key);
+    
+    // Converte de texto para objeto
+    const stored = JSON.parse(storedString);
     return stored.response;
   }
   
@@ -36,16 +43,14 @@ export async function getAndRemoveResponse(
 }
 
 /**
- * Verifica se existe resposta pendente (Opcional, mas útil)
+ * Verifica se existe resposta pendente
  */
 export async function hasResponse(sessionId: string, messageId: string): Promise<boolean> {
   const key = `chat:${sessionId}:${messageId}`;
-  const exists = await kv.exists(key);
+  const exists = await redis.exists(key);
   return exists === 1;
 }
 
-// A função cleanOldResponses não é mais necessária, 
-// pois o Redis apaga sozinho com o parâmetro { ex: 3600 }
 export function cleanOldResponses(): void {
-  // No-op (mantido apenas para não quebrar importações antigas se houver)
+  // Não precisa fazer nada, o Redis limpa sozinho
 }
