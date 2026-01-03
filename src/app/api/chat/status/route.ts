@@ -18,8 +18,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Verifica se existe resposta pendente
-    if (hasResponse(sessionId, lastMessageId)) {
-      const response = getAndRemoveResponse(sessionId, lastMessageId);
+    if (await hasResponse(sessionId, lastMessageId)) {
+      const response = await getAndRemoveResponse(sessionId, lastMessageId);
       return NextResponse.json<ChatStatusResponse>({
         hasResponse: true,
         response: response || '',
