@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     const finalMessageId = messageId || `msg-${Date.now()}`;
 
     // Armazena a resposta no store em memória
-    storeResponse(sessionId, finalMessageId, response);
+    await storeResponse(sessionId, finalMessageId, response);
 
     // Limpa respostas antigas periodicamente
     cleanOldResponses();

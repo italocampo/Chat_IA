@@ -1,54 +1,51 @@
-/**
- * Store em memória para armazenar respostas pendentes do n8n
- * Key: `${sessionId}-${messageId}`
- * Value: resposta do n8n
- */
-const responseStore = new Map<string, { response: string; timestamp: Date }>();
+import { kv } from '@vercel/kv';
 
 /**
- * Armazena uma resposta do n8n
+ * Armazena uma resposta do n8n no Redis
+ * Expira automaticamente em 1 hora (3600 segundos)
  */
-export function storeResponse(sessionId: string, messageId: string, response: string): void {
-  const key = `${sessionId}-${messageId}`;
-  responseStore.set(key, {
+export async function storeResponse(sessionId: string, messageId: string, response: string): Promise<void> {
+  const key = `chat:${sessionId}:${messageId}`;
+  
+  // Salva o valor e define tempo de vida (TTL) de 1 hora
+  await kv.set(key, {
     response,
-    timestamp: new Date(),
-  });
+    timestamp: new Date().toISOString(),
+  }, { ex: 3600 });
 }
 
 /**
- * Recupera e remove uma resposta do store
+ * Recupera e remove uma resposta do Redis
  */
-export function getAndRemoveResponse(
+export async function getAndRemoveResponse(
   sessionId: string,
   messageId: string
-): string | null {
-  const key = `${sessionId}-${messageId}`;
-  const stored = responseStore.get(key);
+): Promise<string | null> {
+  const key = `chat:${sessionId}:${messageId}`;
+  
+  // Tenta buscar o objeto
+  const stored = await kv.get<{ response: string }>(key);
+  
   if (stored) {
-    responseStore.delete(key);
+    // Se achou, deleta do banco para não ler duas vezes
+    await kv.del(key);
     return stored.response;
   }
+  
   return null;
 }
 
 /**
- * Verifica se existe resposta pendente
+ * Verifica se existe resposta pendente (Opcional, mas útil)
  */
-export function hasResponse(sessionId: string, messageId: string): boolean {
-  const key = `${sessionId}-${messageId}`;
-  return responseStore.has(key);
+export async function hasResponse(sessionId: string, messageId: string): Promise<boolean> {
+  const key = `chat:${sessionId}:${messageId}`;
+  const exists = await kv.exists(key);
+  return exists === 1;
 }
 
-/**
- * Limpa respostas antigas (mais de 1 hora)
- */
+// A função cleanOldResponses não é mais necessária, 
+// pois o Redis apaga sozinho com o parâmetro { ex: 3600 }
 export function cleanOldResponses(): void {
-  const oneHourAgo = Date.now() - 60 * 60 * 1000;
-  for (const [key, value] of responseStore.entries()) {
-    if (value.timestamp.getTime() < oneHourAgo) {
-      responseStore.delete(key);
-    }
-  }
+  // No-op (mantido apenas para não quebrar importações antigas se houver)
 }
-
