@@ -58,7 +58,7 @@ export default function WelcomeForm({ onSessionStart }: WelcomeFormProps) {
         </h1>
         <div className="flex items-center gap-1 mb-6">
           <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-          <p className="text-gray-600">Lucas está online</p>
+          <p className="text-gray-600">Ítalo Campos está online</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
