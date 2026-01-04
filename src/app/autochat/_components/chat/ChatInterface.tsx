@@ -2,7 +2,7 @@
 
 import { useEffect, useLayoutEffect, useRef, useState } from "react";
 import Image from "next/image";
-import { useMutation, useQuery } from "@tanstack/react-query";
+import { useMutation } from "@tanstack/react-query";
 import type { Message } from "@/lib/types/chat";
 import {
   getMessages,
@@ -24,30 +24,31 @@ export default function ChatInterface({
   phone,
 }: ChatInterfaceProps) {
   const [messages, setMessages] = useState<Message[]>([]);
-  const [pendingMessageId, setPendingMessageId] = useState<string | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const messagesContainerRef = useRef<HTMLDivElement>(null);
-
   const isInitialLoad = useRef(true);
 
+  // Carregar mensagens salvas ao iniciar
   useEffect(() => {
     const storedMessages = getMessages(sessionId);
     setMessages(storedMessages);
   }, [sessionId]);
 
+  // Scroll automático para o fim
   useLayoutEffect(() => {
-    if (isInitialLoad.current && messages.length > 0) {
-      messagesEndRef.current?.scrollIntoView({ behavior: "instant" });
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ 
+        behavior: isInitialLoad.current ? "instant" : "smooth" 
+      });
       isInitialLoad.current = false;
     }
   }, [messages]);
 
   const sendMessageMutation = useMutation({
     mutationFn: async (messageText: string) => {
-      const localMessageId = `msg-${Date.now()}-${Math.random()
-        .toString(36)
-        .substring(2, 11)}`;
-
+      // 1. Cria ID temporário e mostra mensagem do usuário na hora
+      const localMessageId = `msg-${Date.now()}`;
+      
       const userMessage: Message = {
         id: localMessageId,
         text: messageText,
@@ -59,26 +60,22 @@ export default function ChatInterface({
       setMessages((prev) => [...prev, userMessage]);
       saveMessage(sessionId, userMessage);
 
+      // 2. Envia para nossa API Route e espera a resposta
       const response = await fetch("/api/chat", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           sessionId,
           message: messageText,
-          phone: phone,
+          phone,
         }),
-        cache: "no-store",
       });
 
-      if (!response.ok) {
-        throw new Error("Erro ao enviar mensagem");
-      }
+      if (!response.ok) throw new Error("Erro na comunicação");
 
       const data = await response.json();
-      const apiMessageId = data.messageId || localMessageId;
 
+      // 3. Atualiza status da mensagem do usuário para enviada
       updateMessageStatus(sessionId, localMessageId, "sent");
       setMessages((prev) =>
         prev.map((msg) =>
@@ -86,71 +83,33 @@ export default function ChatInterface({
         )
       );
 
-      setPendingMessageId(apiMessageId);
-
-      return apiMessageId;
+      return data.reply; // Retorna o texto da IA
+    },
+    onSuccess: (aiReply) => {
+      // 4. Cria e exibe a mensagem da IA
+      if (aiReply) {
+        const assistantMessage: Message = {
+          id: `ai-${Date.now()}`,
+          text: aiReply,
+          sender: "assistant",
+          timestamp: new Date(),
+          status: "delivered",
+        };
+        setMessages((prev) => [...prev, assistantMessage]);
+        saveMessage(sessionId, assistantMessage);
+      }
     },
     onError: (error) => {
-      console.error("Erro ao enviar mensagem:", error);
-      // Atualiza status para erro na última mensagem do usuário
+      console.error("Erro:", error);
+      // Marca última mensagem como erro visualmente
       setMessages((prev) => {
-        const lastUserMessage = [...prev]
-          .reverse()
-          .find((msg) => msg.sender === "user");
-        if (lastUserMessage) {
-          updateMessageStatus(sessionId, lastUserMessage.id, "error");
-          return prev.map((msg) =>
-            msg.id === lastUserMessage.id ? { ...msg, status: "error" } : msg
-          );
-        }
-        return prev;
+        const newMsgs = [...prev];
+        const lastUserMsg = newMsgs.reverse().find(m => m.sender === 'user');
+        if (lastUserMsg) lastUserMsg.status = 'error';
+        return [...newMsgs.reverse()]; // restaura ordem
       });
-      setPendingMessageId(null);
     },
   });
-
-  const { data: statusData } = useQuery({
-    queryKey: ["chat-status", sessionId, pendingMessageId],
-    queryFn: async () => {
-      if (!pendingMessageId) return null;
-      const response = await fetch(
-        `/api/chat/status?sessionId=${sessionId}&lastMessageId=${pendingMessageId}`
-      );
-
-      console.log("RESPONSE: ", response);
-
-      if (!response.ok) return null;
-      return response.json();
-    },
-    enabled: !!pendingMessageId && sendMessageMutation.isSuccess,
-    refetchInterval: (query) => {
-      // Para de fazer polling se já recebeu resposta
-      const data = query.state.data;
-      if (data?.hasResponse) {
-        return false;
-      }
-      return 2000; // Polling a cada 2 segundos
-    },
-    refetchIntervalInBackground: true,
-  });
-
-  useEffect(() => {
-    if (statusData?.hasResponse && statusData.response) {
-      const assistantMessage: Message = {
-        id: `msg-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
-        text: statusData.response,
-        sender: "assistant",
-        timestamp: new Date(),
-        status: "delivered",
-      };
-
-      setMessages((prev) => [...prev, assistantMessage]);
-      saveMessage(sessionId, assistantMessage);
-
-      // Limpa o messageId pendente
-      setPendingMessageId(null);
-    }
-  }, [statusData, sessionId]);
 
   const handleSendMessage = (messageText: string) => {
     sendMessageMutation.mutate(messageText);
@@ -159,41 +118,33 @@ export default function ChatInterface({
   return (
     <div className="flex h-dvh flex-col bg-[#e5ddd5]">
       {/* Header */}
-      <div className="bg-[#075e54] px-4 py-3 text-white shadow-md">
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            {/* Avatar do atendente */}
-            <div className="relative">
-              <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center">
-                <Image
-                  src="https://ui-avatars.com/api/?name=ShowCar&background=25D366&color=fff&size=128&bold=true"
-                  alt="Atendente ShowCar"
-                  width={40}
-                  height={40}
-                  className="rounded-full object-cover"
-                  unoptimized
-                />
-              </div>
+      <div className="bg-[#075e54] px-4 py-3 text-white shadow-md z-10">
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <div className="h-10 w-10 rounded-full overflow-hidden border-2 border-white/20 bg-white/10 flex items-center justify-center">
+              <Image
+                src="https://ui-avatars.com/api/?name=ShowCar&background=25D366&color=fff&size=128&bold=true"
+                alt="Atendente"
+                width={40}
+                height={40}
+                unoptimized
+              />
             </div>
-
-            <div>
-              <h1 className="text-lg font-semibold">
-                {process.env.NEXT_PUBLIC_NAME ?? ""} – Atendimento exclusivo
-              </h1>
-              <div className="flex items-center gap-2 text-xs text-green-200">
-                <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
-                <span>Online</span>
-              </div>
+          </div>
+          <div>
+            <h1 className="text-lg font-semibold">
+              {process.env.NEXT_PUBLIC_NAME || "CodeCar"} – Atendimento
+            </h1>
+            <div className="flex items-center gap-2 text-xs text-green-200">
+              <span className="h-2 w-2 rounded-full bg-green-400 animate-pulse"></span>
+              <span>Online</span>
             </div>
           </div>
         </div>
       </div>
 
       {/* Messages Area */}
-      <div
-        ref={messagesContainerRef}
-        className="flex-1 overflow-y-auto px-4 py-4"
-      >
+      <div className="flex-1 overflow-y-auto px-4 py-4 scroll-smooth" ref={messagesContainerRef}>
         {messages.length === 0 && (
           <div className="flex h-full items-center justify-center">
             <div className="text-center text-gray-500">
@@ -205,6 +156,14 @@ export default function ChatInterface({
         {messages.map((message) => (
           <MessageBubble key={message.id} message={message} />
         ))}
+        {/* Mostra indicador de digitando se estiver carregando */}
+        {sendMessageMutation.isPending && (
+           <div className="flex justify-start mb-4">
+             <div className="bg-white rounded-lg p-3 rounded-tl-none shadow-sm">
+               <span className="text-gray-500 text-sm animate-pulse">Digitando...</span>
+             </div>
+           </div>
+        )}
         <div ref={messagesEndRef} />
       </div>
 
