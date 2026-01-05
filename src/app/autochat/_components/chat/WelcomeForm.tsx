@@ -20,26 +20,22 @@ export default function WelcomeForm({ onSubmit, onCancel }: WelcomeFormProps) {
     setIsLoading(true);
 
     try {
-      // Pega a URL que você configurou na Vercel (ou no .env local)
-      const n8nUrl = process.env.NEXT_PUBLIC_N8N_LEAD_URL;
+      // ALTERAÇÃO AQUI: Agora chamamos nossa rota interna "/api/lead"
+      // Isso evita o erro de CORS porque o navegador fala com o seu site,
+      // e o seu site (servidor) fala com o n8n.
+      await fetch("/api/lead", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          name, 
+          phone,
+          interest: "Novo Lead (Site)" 
+        }),
+      });
 
-      if (n8nUrl) {
-        await fetch(n8nUrl, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          // Envia Nome e Telefone para o n8n salvar na planilha
-          body: JSON.stringify({ 
-            name, 
-            phone,
-            interest: "Novo Lead (Site)" // Envia essa tag caso queira mapear no futuro
-          }),
-        });
-      } else {
-        console.warn("URL do n8n não configurada (NEXT_PUBLIC_N8N_LEAD_URL)");
-      }
     } catch (error) {
-      // Se der erro no n8n (ex: AdBlock), apenas loga e segue o baile para não travar o usuário
       console.error("Erro ao salvar lead:", error);
+      // Mesmo com erro, não travamos o usuário
     }
     
     // Libera o acesso ao chat
@@ -71,7 +67,7 @@ export default function WelcomeForm({ onSubmit, onCancel }: WelcomeFormProps) {
               required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Maria Silva"
+              placeholder="Ex: Italo Campos"
               className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all text-gray-800"
             />
           </div>
