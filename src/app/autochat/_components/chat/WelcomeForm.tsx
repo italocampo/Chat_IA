@@ -1,121 +1,116 @@
 "use client";
 
 import { useState } from "react";
-import { generateSessionId, saveSession } from "@/lib/storage/session";
-import { FaWhatsapp } from "react-icons/fa";
-import { extractNumbers, formatPhone, PHONE_CONFIG } from "@/utils/formater";
+import { User, Phone, ArrowRight } from "lucide-react";
 
 interface WelcomeFormProps {
-  onSessionStart: (sessionId: string, name: string, phone: string) => void;
+  onSubmit: (data: { name: string; phone: string }) => void;
+  onCancel: () => void;
 }
 
-export default function WelcomeForm({ onSessionStart }: WelcomeFormProps) {
+export default function WelcomeForm({ onSubmit, onCancel }: WelcomeFormProps) {
   const [name, setName] = useState("");
   const [phone, setPhone] = useState("");
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [error, setError] = useState("");
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const formatted = formatPhone(e.target.value);
-    setPhone(formatted);
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError("");
+    if (!name || !phone) return;
 
-    // Validação básica
-    if (!name.trim()) {
-      setError("Por favor, informe seu nome");
-      return;
+    setIsLoading(true);
+
+    try {
+      // Pega a URL que você configurou na Vercel (ou no .env local)
+      const n8nUrl = process.env.NEXT_PUBLIC_N8N_LEAD_URL;
+
+      if (n8nUrl) {
+        await fetch(n8nUrl, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          // Envia Nome e Telefone para o n8n salvar na planilha
+          body: JSON.stringify({ 
+            name, 
+            phone,
+            interest: "Novo Lead (Site)" // Envia essa tag caso queira mapear no futuro
+          }),
+        });
+      } else {
+        console.warn("URL do n8n não configurada (NEXT_PUBLIC_N8N_LEAD_URL)");
+      }
+    } catch (error) {
+      // Se der erro no n8n (ex: AdBlock), apenas loga e segue o baile para não travar o usuário
+      console.error("Erro ao salvar lead:", error);
     }
-
-    // Validação de telefone completo (11 dígitos: DDD + 9 dígitos)
-    const phoneNumbers = extractNumbers(phone);
-    if (phoneNumbers.length < PHONE_CONFIG.MAX_LENGTH) {
-      setError("Por favor, informe um telefone completo (DDD + número)");
-      return;
-    }
-
-    setIsSubmitting(true);
-
-    // Gera sessionId e salva sessão
-    const sessionId = generateSessionId();
-    saveSession(sessionId, name.trim(), phoneNumbers.trim());
-
-    // Chama callback para iniciar chat
-    setTimeout(() => {
-      onSessionStart(sessionId, name.trim(), phoneNumbers.trim());
-      setIsSubmitting(false);
-    }, 100);
+    
+    // Libera o acesso ao chat
+    onSubmit({ name, phone });
+    setIsLoading(false);
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-[#e5ddd5] p-4">
-      <div className="w-full max-w-md rounded-lg bg-white p-8 shadow-lg">
-        <h1 className="mb-2 text-2xl font-semibold text-gray-800">
-          Fale com nossa equipe
-        </h1>
-        <div className="flex items-center gap-1 mb-6">
-          <div className="w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
-          <p className="text-gray-600">Ítalo Campos está online</p>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4 animate-in fade-in duration-300">
+      <div className="w-full max-w-md bg-white rounded-2xl shadow-2xl overflow-hidden transform transition-all scale-100">
+        
+        {/* Cabeçalho */}
+        <div className="bg-rose-500 p-6 text-white text-center">
+          <h2 className="text-2xl font-bold mb-1">Quase lá! ✨</h2>
+          <p className="text-rose-100 text-sm">
+            Preencha para iniciarmos seu atendimento personalizado.
+          </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div>
-            <label
-              htmlFor="name"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Nome
+        {/* Formulário */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <User size={16} className="text-rose-500" />
+              Seu Nome
             </label>
             <input
-              id="name"
               type="text"
+              required
               value={name}
               onChange={(e) => setName(e.target.value)}
-              placeholder="Seu nome completo"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 text-black"
-              disabled={isSubmitting}
+              placeholder="Ex: Maria Silva"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all text-gray-800"
             />
           </div>
 
-          <div>
-            <label
-              htmlFor="phone"
-              className="block text-sm font-medium text-gray-700 mb-1"
-            >
-              Telefone
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-gray-700 flex items-center gap-2">
+              <Phone size={16} className="text-rose-500" />
+              Seu WhatsApp
             </label>
             <input
-              id="phone"
               type="tel"
+              required
               value={phone}
-              onChange={handlePhoneChange}
-              placeholder="(00) 00000-0000"
-              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-green-500 focus:outline-none focus:ring-2 focus:ring-green-200 text-black"
-              disabled={isSubmitting}
+              onChange={(e) => setPhone(e.target.value)}
+              placeholder="(00) 90000-0000"
+              className="w-full px-4 py-3 rounded-xl border border-gray-200 focus:border-rose-500 focus:ring-2 focus:ring-rose-200 outline-none transition-all text-gray-800"
             />
           </div>
-
-          {error && (
-            <div className="rounded-lg bg-red-50 p-3 text-sm text-red-600">
-              {error}
-            </div>
-          )}
 
           <button
             type="submit"
-            disabled={isSubmitting}
-            className="w-full rounded-lg bg-green-500 px-4 py-3 font-medium text-white transition-colors hover:bg-green-600 disabled:cursor-not-allowed disabled:opacity-50 cursor-pointer flex items-center justify-center gap-2"
+            disabled={isLoading}
+            className="w-full bg-rose-600 hover:bg-rose-700 text-white font-semibold py-4 rounded-xl shadow-lg shadow-rose-200 flex items-center justify-center gap-2 transition-all transform active:scale-95 mt-4"
           >
-            {isSubmitting ? (
+            {isLoading ? (
               "Iniciando..."
             ) : (
               <>
-                Iniciar Conversa <FaWhatsapp size={20} color="#FFF" />
+                Iniciar Atendimento <ArrowRight size={20} />
               </>
             )}
+          </button>
+          
+          <button
+            type="button"
+            onClick={onCancel}
+            className="w-full text-center text-sm text-gray-400 hover:text-gray-600 py-2"
+          >
+            Voltar
           </button>
         </form>
       </div>
