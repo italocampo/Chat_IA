@@ -1,65 +1,55 @@
-import type { Message } from '@/lib/types/chat';
+import type { Message } from "@/lib/types/chat";
 
-const MESSAGES_KEY_PREFIX = 'chat_messages_';
+const STORAGE_PREFIX = "chat_messages_";
 
-/**
- * Obtém a chave do localStorage para as mensagens de uma sessão
- */
-function getMessagesKey(sessionId: string): string {
-  return `${MESSAGES_KEY_PREFIX}${sessionId}`;
-}
-
-/**
- * Salva uma mensagem no localStorage
- */
-export function saveMessage(sessionId: string, message: Message): void {
-  if (typeof window === 'undefined') return;
-  const messages = getMessages(sessionId);
-  messages.push(message);
-  localStorage.setItem(getMessagesKey(sessionId), JSON.stringify(messages));
-}
-
-/**
- * Recupera todas as mensagens de uma sessão do localStorage
- */
 export function getMessages(sessionId: string): Message[] {
-  if (typeof window === 'undefined') return [];
-  const messagesData = localStorage.getItem(getMessagesKey(sessionId));
-  if (!messagesData) return [];
+  if (typeof window === "undefined") return [];
+  const stored = localStorage.getItem(`${STORAGE_PREFIX}${sessionId}`);
+  if (!stored) return [];
   try {
-    const messages = JSON.parse(messagesData) as Message[];
-    // Converter timestamps de string para Date
-    return messages.map((msg) => ({
+    const messages = JSON.parse(stored);
+    // Converte strings de data de volta para objetos Date
+    return messages.map((msg: any) => ({
       ...msg,
       timestamp: new Date(msg.timestamp),
     }));
-  } catch {
+  } catch (e) {
+    console.error("Erro ao carregar mensagens", e);
     return [];
   }
 }
 
-/**
- * Limpa o histórico de mensagens de uma sessão
- */
-export function clearChat(sessionId: string): void {
-  if (typeof window === 'undefined') return;
-  localStorage.removeItem(getMessagesKey(sessionId));
-}
-
-/**
- * Atualiza o status de uma mensagem
- */
-export function updateMessageStatus(
-  sessionId: string,
-  messageId: string,
-  status: Message['status']
-): void {
-  if (typeof window === 'undefined') return;
+export function saveMessage(sessionId: string, message: Message) {
+  if (typeof window === "undefined") return;
   const messages = getMessages(sessionId);
-  const messageIndex = messages.findIndex((msg) => msg.id === messageId);
-  if (messageIndex !== -1) {
-    messages[messageIndex].status = status;
-    localStorage.setItem(getMessagesKey(sessionId), JSON.stringify(messages));
+  // Evita duplicatas
+  if (!messages.find((m) => m.id === message.id)) {
+    messages.push(message);
+    localStorage.setItem(
+      `${STORAGE_PREFIX}${sessionId}`,
+      JSON.stringify(messages)
+    );
   }
 }
 
+export function updateMessageStatus(
+  sessionId: string,
+  messageId: string,
+  status: Message["status"]
+) {
+  if (typeof window === "undefined") return;
+  const messages = getMessages(sessionId);
+  const updatedMessages = messages.map((msg) =>
+    msg.id === messageId ? { ...msg, status } : msg
+  );
+  localStorage.setItem(
+    `${STORAGE_PREFIX}${sessionId}`,
+    JSON.stringify(updatedMessages)
+  );
+}
+
+// ESSA É A FUNÇÃO QUE FALTAVA
+export function clearMessages(sessionId: string) {
+  if (typeof window === "undefined") return;
+  localStorage.removeItem(`${STORAGE_PREFIX}${sessionId}`);
+}
