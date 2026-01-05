@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Codecar - Loja de Carros",
+  title: "CodeClinic - Clinica com IA",
   description: "Atendimento exclusivo",
 };
 

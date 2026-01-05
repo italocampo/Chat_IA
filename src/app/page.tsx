@@ -29,9 +29,11 @@ export default function Home() {
           <div className="bg-rose-500 p-2 rounded-full text-white">
             <Sparkles size={24} />
           </div>
-          <span className="text-2xl font-bold text-rose-600 tracking-tight">CodeClinic</span>
+          <span className="text-2xl font-bold text-rose-600 tracking-tight">
+            CodeClinic
+          </span>
         </div>
-        <button 
+        <button
           onClick={() => setShowChat(true)}
           className="text-sm font-semibold text-rose-600 hover:text-rose-700 transition"
         >
@@ -41,26 +43,28 @@ export default function Home() {
 
       {/* Hero Section */}
       <div className="max-w-6xl mx-auto px-6 py-12 md:py-20 grid md:grid-cols-2 gap-12 items-center">
-        
         {/* Lado Esquerdo - Texto */}
         <div className="space-y-6">
           <div className="inline-block px-4 py-1.5 bg-rose-100 text-rose-700 rounded-full text-sm font-medium mb-2">
             ✨ Tecnologia avançada em estética
           </div>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight text-gray-900">
-            Sua melhor versão começa <span className="text-rose-500">agora.</span>
+            Sua melhor versão começa{" "}
+            <span className="text-rose-500">agora.</span>
           </h1>
           <p className="text-lg text-gray-600 leading-relaxed max-w-lg">
-            Agende avaliações, tire dúvidas sobre procedimentos e descubra o tratamento ideal para você em segundos com nossa Assistente Virtual Inteligente.
+            Agende avaliações, tire dúvidas sobre procedimentos e descubra o
+            tratamento ideal para você em segundos com nossa Assistente Virtual
+            Inteligente.
           </p>
-          
+
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
             <button
               onClick={() => setShowChat(true)}
               className="flex items-center justify-center gap-3 bg-rose-600 hover:bg-rose-700 text-white px-8 py-4 rounded-xl text-lg font-semibold shadow-lg shadow-rose-200 transition-all transform hover:-translate-y-1"
             >
               <MessageCircle size={24} />
-              Falar com a Ana (IA)
+              Falar com a Nívea (IA)
             </button>
           </div>
 
@@ -86,16 +90,20 @@ export default function Home() {
                 <Sparkles size={20} />
               </div>
               <div>
-                <p className="font-bold text-gray-800">Atendimento CodeClinic</p>
+                <p className="font-bold text-gray-800">
+                  Atendimento CodeClinic
+                </p>
                 <p className="text-xs text-green-500 flex items-center gap-1">
-                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span> Online agora
+                  <span className="w-1.5 h-1.5 bg-green-500 rounded-full"></span>{" "}
+                  Online agora
                 </p>
               </div>
             </div>
             {/* Mensagens Fake */}
             <div className="space-y-4">
               <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none text-sm text-gray-600 w-3/4">
-                Olá! Bem-vindo à CodeClinic. Como posso ajudar sua autoestima hoje? ✨
+                Olá! Bem-vindo à CodeClinic. Como posso ajudar sua autoestima
+                hoje? ✨
               </div>
               <div className="bg-rose-500 p-3 rounded-2xl rounded-tr-none text-sm text-white w-2/3 ml-auto shadow-md">
                 Quero saber sobre Botox!
@@ -105,9 +113,12 @@ export default function Home() {
               </div>
             </div>
             <div className="mt-6">
-                <button onClick={() => setShowChat(true)} className="w-full py-3 bg-gray-50 text-rose-600 font-medium rounded-xl border border-rose-100 hover:bg-rose-50 transition text-sm">
-                    Clique para testar real
-                </button>
+              <button
+                onClick={() => setShowChat(true)}
+                className="w-full py-3 bg-gray-50 text-rose-600 font-medium rounded-xl border border-rose-100 hover:bg-rose-50 transition text-sm"
+              >
+                Clique para testar real
+              </button>
             </div>
           </div>
         </div>
