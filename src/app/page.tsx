@@ -44,7 +44,7 @@ export default function Home() {
           <div className="bg-rose-500 p-2 rounded-full text-white">
             <Sparkles size={24} />
           </div>
-          <span className="text-2xl font-bold text-rose-600 tracking-tight">CodeClinic</span>
+          <span className="text-2xl font-bold text-rose-600 tracking-tight">CodeClinic - Cínica Inteligente</span>
         </div>
         <button 
           onClick={handleStartClick}
