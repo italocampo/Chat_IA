@@ -148,8 +148,8 @@ export default function ChatInterface({
             </div>
             <span className="absolute bottom-0 right-0 h-3 w-3 rounded-full bg-green-400 border-2 border-[#075e54]"></span>
           </div>
-          <div>
-            <h1 className="text-base font-semibold leading-tight">CodeClinic</h1>
+          <div> 
+            <h1 className="text-base font-semibold leading-tight">Nívea</h1>
             <p className="text-xs text-green-100 opacity-90">Online agora</p>
           </div>
         </div>
@@ -176,7 +176,7 @@ export default function ChatInterface({
             <div className="bg-white/90 backdrop-blur-sm p-6 rounded-2xl shadow-lg text-center max-w-xs mx-auto">
               <p className="mb-2 text-xl font-semibold text-gray-800">Olá! 👋</p>
               <p className="text-sm text-gray-600 mb-4">
-                Sou a Ana, assistente virtual da CodeClinic.
+                Sou a Nívea, assistente virtual da CodeClinic.
               </p>
               <p className="text-xs text-gray-500">
                 Posso te ajudar com preços, agendamentos e dúvidas sobre procedimentos.
