@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CodeClinic - Clinica com IA",
+  title: "Clinic AI - Atendimento Inteligente para Clínicas de Estética",
   description: "Atendimento exclusivo",
 };
 

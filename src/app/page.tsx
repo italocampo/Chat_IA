@@ -59,13 +59,13 @@ export default function Home() {
         
         <div className="space-y-6">
           <div className="inline-block px-4 py-1.5 bg-rose-100 text-rose-700 rounded-full text-sm font-medium mb-2">
-            ✨ Tecnologia avançada em estética
+            ✨ Tecnologia avançada para Clínica de Estética
           </div>
           <h1 className="text-5xl md:text-6xl font-bold leading-tight text-gray-900">
-            Sua melhor versão começa <span className="text-rose-500">agora.</span>
+            Faça seu teste <span className="text-rose-500">agora.</span>
           </h1>
           <p className="text-lg text-gray-600 leading-relaxed max-w-lg">
-            Agende avaliações, tire dúvidas sobre procedimentos e descubra o tratamento ideal para você em segundos.
+            Agende avaliações, tire dúvidas sobre procedimentos e descubra o poder que a  IA tem para alavancar o seu negócio
           </p>
           
           <div className="flex flex-col sm:flex-row gap-4 pt-4">
@@ -107,7 +107,7 @@ export default function Home() {
             </div>
             <div className="space-y-4 opacity-50">
               <div className="bg-gray-100 p-3 rounded-2xl rounded-tl-none text-sm text-gray-600 w-3/4">
-                Olá! Como posso ajudar sua autoestima hoje? ✨
+                Olá! Teste já a IA para sua clínica ✨
               </div>
             </div>
             <div className="mt-6">
