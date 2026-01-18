@@ -1,6 +1,6 @@
-# Loja de Carros - Chat Automático com IA
+# Chat Automático com IA
 
-Aplicação Next.js com interface de chat estilo WhatsApp integrada com n8n para atendimento automático de loja de carros.
+Aplicação Next.js com interface de chat estilo WhatsApp integrada com n8n para atendimento automático
 
 ## 🚀 Getting Started
 
